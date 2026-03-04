@@ -13,6 +13,10 @@
             "description": "Location where Neovim session files are stored",
             "select": "Select folder",
             "title": "Select a session file directory"
+        },
+        "includeInSearch": {
+            "label": "Include in main search",
+            "description": "Whether to include Neovim sessions in the main launcher search results"
         }
     },
     "launcher": {

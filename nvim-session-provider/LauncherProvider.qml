@@ -15,6 +15,7 @@ Item {
     property bool handleSearch: false
     property string supportedLayouts: "list"
     property bool supportsAutoPaste: false
+    property bool ignoreDensity: false
 
     // Constants
     property int maxResults: 50
@@ -48,7 +49,8 @@ Item {
     function init() {
         Logger.i("NeovimSessionProvider", "init called, pluginDir:", pluginApi?.pluginDir);
         name = pluginApi.tr("launcher.title");
-        sessionDir = pluginApi.pluginSettings.sessionDir || pluginApi.manifest.metadata.defaultSettings.sessionDir
+        handleSearch = pluginApi.pluginSettings.includeInSearch ?? pluginApi.manifest.metadata.defaultSettings.includeInSearch;
+        sessionDir = pluginApi.pluginSettings.sessionDir || pluginApi.manifest.metadata.defaultSettings.sessionDir;
         sessionDir = sessionDir.replace(/~/g, Quickshell.env("HOME"));
         fetchSessionFiles()
     }
@@ -183,46 +185,60 @@ Item {
     }
 
     // Get search results
-    function getResults(searchText) {
+    function getResults(searchText: string): list<var> {
 
-        if (loading) {
-          return [{
-            "name": pluginApi?.tr("launcher.loading.title") || "Loading...",
-            "description": pluginApi?.tr("launcher.loading.description") || "Loading sessions...",
-            "icon": "refresh",
-            "isTablerIcon": true,
-            "isImage": false,
-            "onActivate": function() {}
-          }];
-        }
+        const trimmed = searchText.trim();
+        // Handle command mode: ">nvim" or ">nvim <search>"
+        const isCommandMode = trimmed.startsWith(">nvim");
+        if (isCommandMode) {
 
-        if (!loaded) {
-          return [{
-            "name": pluginApi?.tr("launcher.error.title") || "Neovim sessions not loaded",
-            "description": pluginApi?.tr("launcher.error.description") || "Check your log for error messages",
-            "icon": "alert-circle",
-            "isTablerIcon": true,
-            "isImage": false,
-            "onActivate": function() {
-              root.init();
+            if (loading) {
+              return [{
+                "name": pluginApi?.tr("launcher.loading.title") || "Loading...",
+                "description": pluginApi?.tr("launcher.loading.description") || "Loading sessions...",
+                "icon": "refresh",
+                "isTablerIcon": true,
+                "isImage": false,
+                "onActivate": function() {}
+              }];
             }
-          }];
-        }
 
-        if (!searchText.startsWith(">nvim")) {
-            return [];
-        }
+            if (!loaded) {
+              return [{
+                "name": pluginApi?.tr("launcher.error.title") || "Neovim sessions not loaded",
+                "description": pluginApi?.tr("launcher.error.description") || "Check your log for error messages",
+                "icon": "alert-circle",
+                "isTablerIcon": true,
+                "isImage": false,
+                "onActivate": function() {
+                  root.init();
+                }
+              }];
+            }
 
-        let query = searchText.slice(6).trim().toLowerCase();
-        if(!!query) {
-            return FuzzySort.go(query, database, {
-                limit: maxResults,
-                key: "displayName"
-            }).map(r => formatEntry(r.obj));
+            let query = trimmed.slice(6).trim().toLowerCase();
+            if(!!query) {
+                return doSearch(query);
+            } else {
+                // Database is already sorted by most recently updated workspace
+                return database.map(formatEntry); 
+            }
+
         } else {
-            return database.map(formatEntry); // Database is already sorted by most recently updated workspace
+            // Regular search mode - require at least 2 chars
+            if (!trimmed || trimmed.length < 2 || loading || !loaded) {
+                return [];
+            }
+            return doSearch(trimmed);
         }
 
+    }
+
+    function doSearch(query: string): list<var> {
+        return FuzzySort.go(query, database, {
+            limit: maxResults,
+            key: "displayName"
+        }).map(r => formatEntry(r.obj));
     }
 
     function formatEntry(entry) {
@@ -236,6 +252,7 @@ Item {
           "isTablerIcon": false,             // Use Tabler icon set
           "isImage": false,                 // Is this an image?
           "hideIcon": false,                // Hide the icon entirely
+          "badgeIcon": "folder-open",
 
           // Layout
           "singleLine": false,              // Clip to single line height

@@ -20,16 +20,20 @@ ColumnLayout {
   property string editSessionDir: pluginApi?.pluginSettings?.sessionDir ??
       pluginApi?.manifest?.metadata?.defaultSettings?.sessionDir ??
       "~/.local/share/nvim/sessions"
+  property bool editIncludeInSearch: pluginApi?.pluginSettings?.includeInSearch ??
+      pluginApi?.manifest?.metadata?.defaultSettings?.includeInSearch ??
+      true
+
 
   spacing: Style.marginM
 
-  // Calibre db
   ColumnLayout {
       spacing: Style.marginL
 
       NLabel {
           label: pluginApi?.tr("settings.nvim.title") || "Neovim command"
           description: pluginApi?.tr("settings.nvim.description") || "The Neovim executable or frontend to use. GUI frontends should include `--` after the command, e.g. `nvim-qt --`."
+      }
 
       NTextInput {
           Layout.fillWidth: true
@@ -57,6 +61,14 @@ ColumnLayout {
           onButtonClicked: filePicker.openFilePicker()
       }
 
+      NCheckbox {
+          Layout.fillWidth: true
+          label: pluginApi?.tr("settings.includeInSearch.label") || "Include in main search"
+          description: pluginApi?.tr("settings.includeInSearch.description") || "Whether to include Neovim sessions in the main launcher search results"
+          checked: root.editIncludeInSearch
+          onToggled: (checked) => root.editIncludeInSearch = checked
+      }
+
   }
 
   NFilePicker {
@@ -77,6 +89,7 @@ ColumnLayout {
       pluginApi.pluginSettings.nvim = root.editNvim;
       pluginApi.pluginSettings.runInTerminal = root.editRunInTerminal;
       pluginApi.pluginSettings.sessionDir = root.editSessionDir;
+      pluginApi.pluginSettings.includeInSearch = root.editIncludeInSearch;
       pluginApi.saveSettings();
   }
 }
