@@ -7,7 +7,8 @@ A floating OSD plugin for Noctalia Shell that displays keyboard input in real-ti
 ## Features
 
 * **Real-Time Capture**: Reads raw keyboard input events directly from your device for instantaneous tracking.
-* **Visual Customization**: Personalize the appearance by changing the text and background colors of the key overlay.
+* **Multi-Monitor OSD**: Select exactly which monitors display the overlay with zero memory overhead for disabled screens.
+* **Visual Customization**: Dynamically override Noctalia's native theme colors (`mPrimary`/`mSurface`) with custom text and background colors for the key pills.
 * **Flexible Placement**: Anchor the display to the top or bottom edge of your monitor and fine-tune the margin distance.
 * **Smart Auto-Hide**: The OSD fades out gracefully after a custom amount of idle time.
 * **Quick Toggle**: Turn the capture process on or off instantly using shell IPC commands.
