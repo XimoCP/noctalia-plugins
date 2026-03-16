@@ -63,6 +63,14 @@ Item {
     return Color.mPrimary
   }
 
+  // ── Last 10 nights of Ramadan ─────────────────────────────────────────
+  readonly property bool showLast10Nights: {
+    if (!isRamadan || prayerTimings === null || hijriDay < 20) return false
+    if (hijriDay < 29)   return true
+    if (hijriDay === 29) return hijriMonthDays === 30
+    return true // day 30
+  }
+
   FontLoader {
     id: decoFont
     source: pluginApi?.pluginDir ? (pluginApi.pluginDir + "/DecoType.ttf") : ""
@@ -592,8 +600,8 @@ Item {
                     saveCalCache(m, y, res.data)
                     updateGrid()
                   }
-                } catch(e) { Logger.w("Mawaqit", "Cal parse error:", e.message) }
-              } else { Logger.w("Mawaqit", "Cal fetch failed HTTP:", xhr.status) }
+                } catch(e) { Logger.e("Mawaqit", "Cal parse error:", e.message) }
+              } else { Logger.e("Mawaqit", "Cal fetch failed HTTP:", xhr.status) }
             }
             xhr.send()
           }
@@ -782,13 +790,35 @@ Item {
             // Today's event
             Text {
               readonly property string todayEvAr: calItem.isCurrentMonth ? getEventAr(hijriMonth, hijriDay) : ""
-              visible: todayEvAr !== ""
+              visible: todayEvAr !== "" && !root.showLast10Nights
               text: "🌙 " + todayEvAr
               font.family: decoFontReady ? decoFont.name : ""
               font.pointSize: Style.fontSizeM
               color: Color.mTertiary
               horizontalAlignment: Text.AlignHCenter
               Layout.alignment: Qt.AlignHCenter
+            }
+
+            // ── Last 10 nights of Ramadan banner ──────────────────────────
+            Rectangle {
+              visible: calItem.isCurrentMonth && root.showLast10Nights
+              Layout.fillWidth: true
+              implicitHeight: last10Text.implicitHeight + Style.marginM * 2
+              color: Qt.alpha(Color.mPrimary, 0.08); radius: Style.radiusM
+
+              Text {
+                id: last10Text
+                anchors {
+                  left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter
+                  leftMargin: Style.marginM; rightMargin: Style.marginM
+                }
+                text: "العشر الأواخر\nأفضل ليالي رمضان، فيها ليلة القدر خير من ألف شهر."
+                font.family: decoFontReady ? decoFont.name : ""
+                font.pointSize: Style.fontSizeM
+                color: Color.mPrimary
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+              }
             }
 
             // Last-synced label

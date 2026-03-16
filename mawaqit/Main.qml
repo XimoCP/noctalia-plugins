@@ -273,7 +273,7 @@ Item {
             }
             processEntry(todayEntry || json.data[0])
           } else {
-            Logger.w("Mawaqit", "API error:", json.status)
+            Logger.e("Mawaqit", "API error:", json.status)
             fetchSingleDay()
           }
         } catch(e) {
@@ -281,7 +281,7 @@ Item {
           fetchSingleDay()
         }
       } else if (xhr.status === 0) {
-        Logger.w("Mawaqit", "Network unavailable, scheduling retry")
+        Logger.e("Mawaqit", "Network unavailable, scheduling retry")
         hasError = !prayerTimings
         errorMessage = pluginApi?.tr("error.network")
         scheduleRetry()
@@ -331,7 +331,7 @@ Item {
   }
 
   function onFetchFailed(reason) {
-    Logger.w("Mawaqit", "Fetch failed:", reason)
+    Logger.e("Mawaqit", "Fetch failed:", reason)
     hasError = !prayerTimings
     errorMessage = pluginApi?.tr("error.network")
     scheduleRetry()
