@@ -59,7 +59,7 @@ jobs:
             )
 
             # Get all the files that exist in this PR
-            folder_sha=$(echo "$head_tree" | jq --arg folder "$folder" '.tree[] | select(.path == $folder and .type == "tree") | .sha')
+            folder_sha=$(echo "$head_tree" | jq -r --arg folder "$folder" '.tree[] | select(.path == $folder and .type == "tree") | .sha')
             files_in_pr=$(gh api "repos/$REPO/git/trees/$folder_sha" --jq '[ .tree[] | select(.type == "blob") | .path ]')
 
             ## Check which required files are fulfilled
@@ -75,9 +75,15 @@ jobs:
               done
             done
 
+            missing=()
+            for required in "${required_files[@]}";
+            do
+              [[ -n "$required" ]] && missing+=("$required")
+            done
+
             # The list is empty, all required files are satisfied.
-            if [ ${#required_files[@]} -eq 0 ]; then
-              echo "All required files are satisfied."
+            if [ ${#missing[@]} -eq 0 ]; then
+              echo "No missing files found!"
               continue
             fi
 
@@ -86,7 +92,7 @@ jobs:
             # - File 1
             # - File 2
             # - File 3 etc etc
-            comment_required_files=$(printf '- %s\n' "${required_files[@]}")
+            comment_required_files=$(printf '- %s\n' "${missing[@]}")
             comment_body="Folder '$folder' is missing some required files: \n ${comment_required_files}"
 
             # Post comment using gh CLI
